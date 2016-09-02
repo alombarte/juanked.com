@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <meta robots="noindex,nofollow">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+<script   src="https://code.jquery.com/jquery-1.12.4.min.js"   integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="   crossorigin="anonymous"></script>
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+  <script src="./wallpapers.js"></script>
+  <script src="http://mustache.github.io/extras/mustache.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-83597810-1', 'auto');
+    ga('send', 'pageview');
+
+  </script>
+  <script language="javascript">
+
+  $( document ).ready(function() {
+
+    // images variable is in "wallpapers.js":
+    buildImagesList(images);
+    preview();
+
+
+    $("input[name=ImageUrl]").change(function(){
+      preview();
+    });
+    $("#CustomImageURL").change(function(){
+
+      if ( $('#CustomImageURL') != '' ) {
+        $('#RadioCustom').prop( "checked", true );
+        preview();
+      }
+
+    });
+  });
+
+
+  function buildImagesList(images)
+  {
+    var randomElement = Math.floor(Math.random() * (images.length));
+    var images_vars = {
+      "images": images,
+      "random": images[randomElement]["url"]
+    }
+
+
+    var render = $('#imagesList').html();
+    render = Mustache.render(render, images_vars);
+    $('#imagesList').html(render);
+
+
+
+
+  }
+
+  function preview() {
+     $('#preview').attr('src',getSelectedImage());
+     previewCode();
+  }
+
+  function getSelectedImage() {
+    var selected_image = $('input[name=ImageUrl]:checked').val();
+    if ( selected_image == '' ) {
+      selected_image = $('#CustomImageURL').val();
+    }
+    return selected_image;
+  }
+
+
+  function hashCode(str) {
+    len = str.length;
+    hash = 0;
+
+    for(i=1; i<=len; i++){
+        char = str.charCodeAt((i-1));
+        hash += char*Math.pow(31,(len-i));
+        hash = hash & hash; //javascript limitation to force to 32 bits
+    }
+
+    return hash;
+  }
+
+  function getOSCommands(os) {
+
+    var command = '';
+    var os_commands = {
+      'ubuntu': [
+        "gsettings set org.gnome.desktop.background picture-uri file:///{{Output}}",
+        'gnome-screensaver-command --lock'
+      ],
+      'osx': [
+        'osascript -e \'tell application "System Events" to set picture of every desktop to ("{{Output}}" as POSIX file as alias)\'',
+        'pmset displaysleepnow'
+      ]
+    };
+
+    if(typeof os_commands[os] === 'undefined') {
+      return;
+    }
+
+    for (var i = 0, len = os_commands[os].length; i < len; i++) {
+      command += ' && ' + os_commands[os][i];
+    }
+
+    return command;
+  }
+
+  function previewCode(){
+
+    var selected_image = getSelectedImage();
+
+    if ( '' == selected_image ) {
+      return;
+    }
+
+    var view = {
+      ImageURL: selected_image,
+      Output: "/tmp/" + hashCode(selected_image)
+    };
+
+    curl = 'curl -o {{Output}} "{{ImageURL}}"';
+
+    templateOS = curl + getOSCommands( 'osx' );
+    templateUbuntu = curl + getOSCommands( 'ubuntu' );
+
+    templateOS = Mustache.render(templateOS, view);
+    templateUbuntu = Mustache.render(templateUbuntu, view);
+
+    $('#scriptOS').html(templateOS);
+    $('#scriptUbuntu').html(templateUbuntu);
+
+
+
+  }
+  </script>
+
+</head>
+<body>
+ 
+<div class="container">
+    <div class="row">
+      <h3><img src="juanked.png" alt="Juanked!" /></h3>
+    </div>
+    <div class="row">
+      <h2>Set your colleague wallpaper via command line</h2>
+      <p><strong>Your colleague left for a minute and forgot to lock the desktop?</strong>... and knows how dangerous and unfortunate is leaving computers unprotected at their own luck?
+        It's an oportunity for you to set a reminder. Paste the command below in a terminal and wait for your colleague to return. Either be you or someone else, it's important to not disclose
+        who is the author of the juanking to the victim. "<strong>You've been juanked!</strong>" </p>
+        <p>The command will download the image and <strong>set the wallpaper in all screens</strong>, and finally will lock the computer.</p>
+        <div class="form-horizontal">
+           <div class="form-group">
+              <div class="col-sm-2 control-label">
+                <label for="replacementCmd"> Choose wallpaper</label>
+                <br />
+                <img src="" width="100%" id="preview" />
+                <p><small>Depending on your browser and the returned HTTP status code some images might appear broken.</small></p>
+              </div>
+              <div class="col-sm-10" id="imagesList">
+                 {{#images}}
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="ImageUrl" value="{{url}}" />
+                      {{title}}
+                    </label>
+                  </div>
+                  {{/images}}
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="ImageUrl" value="{{random}}" checked="checked" />
+                      <strong>Random pick</strong>
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="ImageUrl" value="" id="RadioCustom">
+                      Custom...
+                    </label>
+                    <input type="text" class="form-control" id="CustomImageURL" value="">
+                    <span class="help-block">Path to wallpaper image</span>
+                  </div>
+              </div>
+          </div>
+          </div>
+      </div>
+      <hr/>
+      <div class="row">
+        <p>Paste in the terminal...</p>
+          <h2>OS X</h2>
+          <textarea class="form-control" id="scriptOS"></textarea>
+          </div>
+            <div class="row">
+          <h2>Ubuntu</h2>
+          <textarea class="form-control" id="scriptUbuntu"></textarea>
+      </div>
+
+
+      <a href="https://github.com/alombarte/juanked.com"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
+
+  
+
+  
+</div>
+
+</body>
+</html>
