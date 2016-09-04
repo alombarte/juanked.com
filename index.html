@@ -102,11 +102,13 @@
     var os_commands = {
       'ubuntu': [
         "gsettings set org.gnome.desktop.background picture-uri file:///{{Output}}",
-        'gnome-screensaver-command --lock'
+        'gnome-screensaver-command --lock',
+        'exit'
       ],
       'osx': [
         'osascript -e \'tell application "System Events" to set picture of every desktop to ("{{Output}}" as POSIX file as alias)\'',
-        'pmset displaysleepnow'
+        'pmset displaysleepnow',
+        'exit'
       ]
     };
 
