@@ -9,7 +9,7 @@ images = [
   },
   {
     "title": "El Fary",
-    "url": "http://spf.fotolog.com/photo/47/1/80/jartokan/1098803800_f.jpg"
+    "url": "http://photos1.blogger.com/blogger/2833/1237/1600/fary1.jpg"
   },
   {
     "title": "David Hasselhof",
