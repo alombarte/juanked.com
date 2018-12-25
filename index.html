@@ -101,13 +101,20 @@
     var command = '';
     var os_commands = {
       'ubuntu': [
-        "gsettings set org.gnome.desktop.background picture-uri file:///{{Output}}",
+        "gsettings set org.gnome.desktop.background picture-uri file:////tmp/{{Output}}",
         'gnome-screensaver-command --lock',
         'exit'
       ],
       'osx': [
-        'osascript -e \'tell application "System Events" to set picture of every desktop to ("{{Output}}" as POSIX file as alias)\'',
+        'osascript -e \'tell application "System Events" to set picture of every desktop to ("/tmp/{{Output}}" as POSIX file as alias)\'',
         'pmset displaysleepnow',
+        'exit'
+      ],
+      'windows': [
+        'copy /y %TEMP%\\{{Output}} %appdata%\\Microsoft\\Windows\\Themes\\TranscodedWallpaper.jpg',
+        'REG ADD "HKCU\\Control Panel\\Desktop" /V Wallpaper /T REG_SZ /F /D %TEMP%\\{{Output}}',
+        'REG ADD "HKCU\\Software\\Microsoft\\Internet Explorer\\Desktop\\General" /V WallpaperSource /T REG_SZ /F /D %TEMP%\\{{Output}}',
+        'RUNDLL32.EXE USER32.DLL, UpdatePerUserSystemParameters 1, True"',
         'exit'
       ]
     };
@@ -133,21 +140,23 @@
 
     var view = {
       ImageURL: selected_image,
-      Output: "/tmp/" + hashCode(selected_image)
+      Output: hashCode(selected_image)
     };
 
-    curl = 'curl -o {{Output}} "{{ImageURL}}"';
+    curl = 'curl -o /tmp/{{Output}} "{{ImageURL}}"';
+    startw = 'start "" /b %SystemRoot%\\System32\\cmd.exe /q /c "certutil.exe -urlcache -split -f "{{ImageURL}}" %TEMP%\\{{Output}}';
 
     templateOS = curl + getOSCommands( 'osx' );
     templateUbuntu = curl + getOSCommands( 'ubuntu' );
+    templateWindows = startw + getOSCommands( 'windows' );
 
     templateOS = Mustache.render(templateOS, view);
     templateUbuntu = Mustache.render(templateUbuntu, view);
+    templateWindows = Mustache.render(templateWindows, view);
 
     $('#scriptOS').html(templateOS);
     $('#scriptUbuntu').html(templateUbuntu);
-
-
+    $('#scriptWindows').html(templateWindows);
 
   }
   </script>
@@ -205,18 +214,19 @@
         <p>Paste in the terminal...</p>
           <h2>OS X</h2>
           <textarea class="form-control" id="scriptOS"></textarea>
-          </div>
-            <div class="row">
+      </div>
+      <div class="row">
           <h2>Ubuntu</h2>
           <textarea class="form-control" id="scriptUbuntu"></textarea>
       </div>
-
+      <div class="row">
+          <h2>Windows</h2>
+          <textarea class="form-control" id="scriptWindows" style="height: 96px;"></textarea>
+      </div>
+      <div class="row" style="height: 64px;"></div>
 
       <a href="https://github.com/alombarte/juanked.com"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
 
-  
-
-  
 </div>
 
 </body>
